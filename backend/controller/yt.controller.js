@@ -71,7 +71,7 @@ const json = {
             views: 622567,
             length: "1:58",
             description:
-                "If you haven't visited a Lenskart store yet, you're in for a treat! We've got not one, not two, but three fantastic services that you can ...",
+                "If you haven't visited a Lenskart store yet, you're in for a treat! We've got not one, not two, but three fantastic services that you can...",
             extensions: ["4K"],
             thumbnail: {
                 static: "https://i.ytimg.com/vi/jOvPHe-JiV0/hq720.jpg?sqp=-oaymwEcCOgCEMoBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBJkIPaUJSBTl5L8JdPD9urflJn4g",

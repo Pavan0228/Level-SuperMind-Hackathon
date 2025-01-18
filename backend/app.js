@@ -13,6 +13,8 @@ app.use(cookieParser());
 
 import { userRouter } from "./routers/user.routes.js";
 import { ytRouter } from "./routers/yt.routes.js";
+import { playstoreRouter } from "./routers/playstore.routes.js";
+import { reportRouter } from "./routers/report.routes.js";
 
 //add test route
 app.get("/", (req, res) => {
@@ -21,5 +23,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/v1/auth", userRouter);
 app.use("/api/v1/yt", ytRouter);
+app.use("/api/v1/playstore", playstoreRouter);
+app.use("/api/v1/report", reportRouter);
 
 export { app };
