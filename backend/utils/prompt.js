@@ -1,10 +1,13 @@
-import { Configuration, OpenAIApi } from "openai";
+import OpenAI from "openai";
+import dotenv from "dotenv";
 
-const configuration = new Configuration({
-    apiKey: process.env.OPENAI_API_KEY,
+dotenv.config();
+
+const { OPENAI_API_KEY } = process.env;
+
+const openai = new OpenAI({
+    apiKey: OPENAI_API_KEY,
 });
-
-const openai = new OpenAIApi(configuration);
 
 async function generateReport(data) {
     const prompt = `
@@ -24,12 +27,18 @@ async function generateReport(data) {
         ### 3. Reference Dashboard:
         - Include **direct links** to resources like YouTube videos, competitor ads, or blogs for easy validation and inspiration.
         - Offer a summary of key insights visualized in graphs, word clouds, or sentiment trends. For sentiment trends, summarize the overall user sentiment (e.g., "positive", "neutral", "negative").
+        - Include the following **graph data**:
+            - **Rating distribution** (percentage of 1-star, 2-star, etc. reviews).
+            - **Average likes per review**.
+            - **Video engagement metrics** such as total views, average views per video, and the most popular video based on views.
 
         ### 4. YouTube Video Analysis:
-        - For each YouTube video, include a detailed analysis:
+        - For each YouTube video, include a detailed analysis ensure that all youtube videos are presented in the following format you should not skip any video:
             - **Title**: Provide the title of the video.
             - **Description**: Summarize what the video is about.
-            - **Key Performance Factors**: Explain why this video stands out (e.g., hooks, visual appeal, pacing, content relevance) and why it has more views compared to others in the dataset.
+            - **Views**: The number of views.
+            - **Length**: Duration of the video.
+            - **Key Performance Factors**: Explain why this video performs well, including specific elements of title description, content pacing, relevance, etc., that contribute to its success.
 
         Ensure your response strictly adheres to the JSON structure below:
         {
@@ -52,13 +61,24 @@ async function generateReport(data) {
             },
             "referenceDashboard": {
                 "links": ["List of direct URLs to sources"],
-                "insightSummary": "Description of visual insights, including trends, word clouds, or sentiment analysis"
+                "insightSummary": "Description of visual insights, including trends, word clouds, or sentiment analysis",
+                "graphData": {
+                    "ratingDistribution": {"1-star": 60, "2-star": 20, "3-star": 10, "4-star": 5, "5-star": 5},
+                    "averageLikesPerReview": 65,
+                    "videoMetrics": {
+                        "totalViews": 1000000,
+                        "averageViewsPerVideo": 100000,
+                        "mostPopularVideo": "Video Title with Highest Views"
+                    }
+                }
             },
             "youtubeVideos": [
                 {
                     "title": "Title of the video",
                     "description": "Summary of the video's content",
-                    "keyPerformanceFactors": "Explanation of why this video performs well, including specific elements of title descprition etc that contribute to its success"
+                    "views": "Number of views",
+                    "length": "Duration of the video",
+                    "keyPerformanceFactors": "Explanation of why this video performs well, including specific elements of title description etc that contribute to its success"
                 }
             ]
         }
@@ -71,14 +91,24 @@ async function generateReport(data) {
     `;
 
     try {
-        const response = await openai.createCompletion({
+        const response = await openai.chat.completions.create({
             model: "gpt-4",
-            prompt: prompt,
-            max_tokens: 3000,
+            messages: [
+                {
+                    role: "system",
+                    content:
+                        "You are a powerful AI designed to analyze large datasets and extract actionable insights.",
+                },
+                {
+                    role: "user",
+                    content: prompt,
+                },
+            ],
+            max_tokens: 5000,
             temperature: 0.7,
         });
 
-        return JSON.parse(response.data.choices[0].text.trim());
+        return JSON.parse(response.choices[0].message.content.trim());
     } catch (error) {
         console.error("Error generating report:", error);
         throw error;
