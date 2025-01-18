@@ -1,257 +1,210 @@
-import React, { useState } from 'react';
-import { Search, ChevronDown, TrendingUp, Info } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search } from 'lucide-react';
+import Chart from 'chart.js/auto';
 
-const sampleData = {
-  insights: [
-    {
-      id: 1,
-      title: "Customer Pain Points",
-      description: "Users struggle with complex onboarding processes",
-      frequency: "85%",
-      sentiment: "High Impact",
-      source: "Survey Data",
+const fetchData = async (query) => {
+  const response = await fetch('http://localhost:3000/api/v1/yt/demo/ads', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
     },
-    {
-      id: 2,
-      title: "Feature Requests",
-      description: "Mobile app integration is most requested feature",
-      frequency: "72%",
-      sentiment: "Urgent",
-      source: "User Feedback",
-    },
-    {
-      id: 3,
-      title: "Purchase Barriers",
-      description: "Price point is primary obstacle for SMB segment",
-      frequency: "64%",
-      sentiment: "Negative",
-      source: "Sales Data",
-    },
-  ],
-  competitors: [
-    {
-      id: 1,
-      title: "Market Leader Analysis",
-      companyName: "TechGiant Pro",
-      marketShare: "35%",
-      strengths: ["Brand Recognition", "Feature Set", "Customer Support"],
-      adSpend: "$2.5M/month",
-      engagement: "4.2M monthly visits",
-    },
-    {
-      id: 2,
-      title: "Rising Competitor",
-      companyName: "StartupX",
-      marketShare: "15%",
-      strengths: ["Innovation", "Pricing", "User Experience"],
-      adSpend: "$800K/month",
-      engagement: "1.8M monthly visits",
-    },
-    {
-      id: 3,
-      title: "Niche Player",
-      companyName: "SpecialSoft",
-      marketShare: "8%",
-      strengths: ["Specialization", "Customer Service", "Integration"],
-      adSpend: "$400K/month",
-      engagement: "900K monthly visits",
-    },
-  ],
-  content: [
-    {
-      id: 1,
-      title: "Top Performing Content",
-      type: "Video Tutorial",
-      engagement: "250K views",
-      conversionRate: "4.2%",
-      platform: "YouTube",
-      topic: "Product Walkthrough",
-    },
-    {
-      id: 2,
-      title: "Viral Social Post",
-      type: "Carousel Post",
-      engagement: "180K impressions",
-      conversionRate: "3.8%",
-      platform: "LinkedIn",
-      topic: "Success Story",
-    },
-    {
-      id: 3,
-      title: "Blog Performance",
-      type: "How-to Guide",
-      engagement: "95K reads",
-      conversionRate: "2.9%",
-      platform: "Company Blog",
-      topic: "Industry Tips",
-    },
-  ],
-  trends: [
-    {
-      id: 1,
-      title: "Mobile Usage",
-      description: "Increasing mobile-first user base",
-      trendPercentage: 78,
-      growth: "+24% YoY",
-    },
-    {
-      id: 2,
-      title: "AI Integration",
-      description: "Growing demand for AI features",
-      trendPercentage: 65,
-      growth: "+45% YoY",
-    },
-    {
-      id: 3,
-      title: "Remote Work Tools",
-      description: "Sustained demand for collaboration",
-      trendPercentage: 82,
-      growth: "+32% YoY",
-    },
-  ],
+    body: JSON.stringify({ query }),
+  });
+  const data = await response.json();
+  return data;
 };
 
-const renderCard = (item) => (
-  <div className="bg-white rounded-lg shadow p-6 flex flex-col gap-3">
-    <h3 className="text-lg font-bold mb-1">{item.title}</h3>
-    <p className="text-gray-600">{item.description}</p>
-    {item.frequency && (
-      <div className="text-sm text-gray-500">
-        <strong>Frequency:</strong> {item.frequency}
-      </div>
-    )}
-    {item.sentiment && (
-      <div className="text-sm text-gray-500">
-        <strong>Sentiment:</strong> {item.sentiment}
-      </div>
-    )}
-    {item.source && (
-      <div className="text-sm text-gray-500">
-        <strong>Source:</strong> {item.source}
-      </div>
-    )}
-    <div className="mt-auto flex justify-end">
-      <button className="text-sm text-[#2D0075] hover:underline flex items-center gap-1">
-        More Info <Info className="h-4 w-4" />
-      </button>
-    </div>
-  </div>
-);
-
 export default function Dashboard() {
-  const [activeTab, setActiveTab] = useState('insights');
+  const [activeTab, setActiveTab] = useState('content');
   const [searchQuery, setSearchQuery] = useState('');
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [videoResults, setVideoResults] = useState([]);
+  const [shortsResults, setShortsResults] = useState([]);
+  const [showGraph, setShowGraph] = useState(false);
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchQuery) {
+      setLoading(true);
+      fetchData(searchQuery)
+        .then((fetchedData) => {
+          setVideoResults(fetchedData.video_results || []);
+          setShortsResults(fetchedData.shorts_results || []);
+          setData(fetchedData[activeTab] || []);
+        })
+        .finally(() => setLoading(false));
+    }
+  };
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    setIsMenuOpen(false);
   };
 
-  const filteredData = sampleData[activeTab].filter((item) =>
-    item.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const MobileNav = () => (
-    <div className="relative md:hidden">
-      <button
-        onClick={() => setIsMenuOpen(!isMenuOpen)}
-        className="w-full flex items-center justify-between px-4 py-2 bg-white rounded-md shadow"
-      >
-        <span className="capitalize">{activeTab}</span>
-        <ChevronDown className={`h-5 w-5 transition-transform ${isMenuOpen ? 'transform rotate-180' : ''}`} />
-      </button>
-      {isMenuOpen && (
-        <div className="absolute z-50 w-full mt-1 bg-white rounded-md shadow-lg">
-          {Object.keys(sampleData).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => handleTabChange(tab)}
-              className={`w-full text-left px-4 py-3 text-sm capitalize hover:bg-gray-50 ${
-                activeTab === tab ? 'text-[#A941D2] font-medium' : 'text-gray-600'
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
+  const renderVideoResults = () => (
+    videoResults.length > 0 ? (
+      videoResults.map((video, index) => (
+        <div key={index} className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-lg font-bold">{video.title}</h3>
+          <img src={video.thumbnail.static} alt={video.title} className="w-full rounded-md mb-3" />
+          <p className="text-gray-600">{video.description}</p>
+          <div className="text-sm text-gray-500">
+            <strong>Published:</strong> {video.published_date}
+          </div>
+          <div className="text-sm text-gray-500">
+            <strong>Views:</strong> {video.views ? video.views.toLocaleString() : 'N/A'}
+          </div>
         </div>
-      )}
-    </div>
+      ))
+    ) : (
+      <div className="col-span-3 text-center text-gray-500">
+        No video results found.
+      </div>
+    )
   );
 
-  const DesktopNav = () => (
-    <div className="hidden md:block border-b">
-      <nav className="flex space-x-8 px-6" aria-label="Tabs">
-        {Object.keys(sampleData).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => handleTabChange(tab)}
-            className={`py-4 px-1 border-b-2 font-medium text-sm capitalize ${
-              activeTab === tab
-                ? 'border-[#A941D2] text-[#2D0075]'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
-      </nav>
-    </div>
+  const renderShortsResults = () => (
+    shortsResults.length > 0 ? (
+      shortsResults.map((shortItem, index) => (
+        <div key={index} className="bg-white rounded-lg shadow p-6 mb-4">
+          <h3 className="text-lg font-bold">{shortItem.shorts.title}</h3>
+          <a href={shortItem.shorts.link} target="_blank" rel="noopener noreferrer">
+            <img src={shortItem.shorts.thumbnail} alt={shortItem.shorts.title} className="w-full rounded-md mb-3" />
+          </a>
+          <div className="text-sm text-gray-500">
+            <strong>Views:</strong> {shortItem.shorts.views_original || 'N/A'}
+          </div>
+          <div className="text-sm text-gray-500">
+            <strong>Video Link:</strong> <a href={shortItem.shorts.link} className="text-indigo-600">{shortItem.shorts.link}</a>
+          </div>
+        </div>
+      ))
+    ) : (
+      <div className="col-span-3 text-center text-gray-500">
+        No shorts results found.
+      </div>
+    )
   );
+
+  useEffect(() => {
+    if (activeTab === 'insights' && videoResults.length > 0 && shortsResults.length > 0 && showGraph) {
+      const ctx = document.getElementById('pieChart');
+      new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: ['Video Results', 'Shorts Results'],
+          datasets: [{
+            label: 'Views Comparison',
+            data: [
+              videoResults.reduce((acc, video) => acc + (video.views || 0), 0),
+              shortsResults.reduce((acc, shortItem) => acc + (shortItem.shorts.views || 0), 0),
+            ],
+            backgroundColor: ['rgba(169, 65, 210, 0.6)', 'rgba(45, 0, 117, 0.6)'],
+          }],
+        },
+        options: {
+          responsive: true,
+        },
+      });
+    }
+  }, [videoResults, shortsResults, activeTab, showGraph]);
 
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-gradient-to-r from-[#A941D2] to-[#2D0075] text-white shadow">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <h1 className="text-2xl sm:text-3xl font-bold">ART Finder</h1>
-            <div className="flex items-center gap-2 sm:gap-4">
-              <button className="flex-1 sm:flex-none px-4 py-2 bg-white/10 rounded-md hover:bg-white/20 transition-colors text-sm sm:text-base">
-                Help
-              </button>
-              <button className="flex-1 sm:flex-none px-4 py-2 bg-white rounded-md text-[#2D0075] hover:bg-gray-100 transition-colors text-sm sm:text-base">
-                New Research
-              </button>
-            </div>
-          </div>
+        <div className="flex justify-between items-center p-4">
+          <h1 className="text-2xl font-bold">Dashboard</h1>
         </div>
       </header>
 
       <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 mb-4 sm:mb-8">
-          <div className="flex flex-col gap-4">
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Research Topic
-              </label>
-              <div className="relative">
+          <h2 className="text-lg font-medium text-gray-900">Search Keywords</h2>
+          <form onSubmit={handleSearch} className="mt-4">
+            <label htmlFor="search" className="sr-only">Search</label>
+            <div className="flex rounded-md shadow-sm">
+              <div className="relative flex items-stretch flex-grow focus-within:z-10">
                 <input
                   type="text"
+                  name="search"
+                  id="search"
+                  className="focus:ring-indigo-500 focus:border-indigo-500 block w-full rounded-none rounded-l-md pl-10 sm:text-sm border-gray-300"
+                  placeholder="Enter your search"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border rounded-md"
-                  placeholder="Enter your topic or niche..."
                 />
-                <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
               </div>
+              <button
+                type="submit"
+                className="relative -ml-px inline-flex items-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-700 bg-gray-50 hover:bg-gray-100"
+              >
+                <Search className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                <span>Search</span>
+              </button>
             </div>
-            <button className="w-full sm:w-auto px-6 py-2 bg-gradient-to-r from-[#A941D2] to-[#2D0075] text-white rounded-md hover:opacity-90 transition-opacity">
-              Search
-            </button>
-          </div>
+          </form>
         </div>
 
         <div className="bg-white rounded-lg shadow-lg mb-4 sm:mb-8">
-          <MobileNav />
-          <DesktopNav />
+          <div className="sm:hidden">
+            <label htmlFor="tabs" className="sr-only">Select a tab</label>
+            <select
+              id="tabs"
+              name="tabs"
+              className="block w-full rounded-md border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
+              value={activeTab}
+              onChange={(e) => handleTabChange(e.target.value)}
+            >
+              <option value="content">Content</option>
+              <option value="insights">Insights</option>
+            </select>
+          </div>
+          <div className="hidden sm:block">
+            <nav className="flex space-x-4" aria-label="Tabs">
+              <button
+                className={`px-3 py-2 font-medium text-sm rounded-md ${activeTab === 'content' ? 'bg-indigo-100 text-indigo-700' : 'text-gray-500 hover:text-gray-700'}`}
+                onClick={() => handleTabChange('content')}
+              >
+                Content
+              </button>
+              <button
+                className={`px-3 py-2 font-medium text-sm rounded-md ${activeTab === 'insights' ? 'bg-indigo-100 text-indigo-700' : 'text-gray-500 hover:text-gray-700'}`}
+                onClick={() => handleTabChange('insights')}
+              >
+                Insights
+              </button>
+            </nav>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
-          {filteredData.map((item) => (
-            <div key={item.id} className="relative">
-              {renderCard(item)}
-            </div>
-          ))}
+        {loading ? (
+          <div className="text-center text-gray-500">Loading...</div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
+            {activeTab === 'content' && (
+              <>
+                <h3 className="text-lg font-semibold mb-4">Video Results</h3>
+                {renderVideoResults()}
+                <h3 className="text-lg font-semibold mt-8 mb-4">Shorts Results</h3>
+                {renderShortsResults()}
+              </>
+            )}
+
+            {activeTab === 'insights' && showGraph && (
+              <div className="mt-4">
+                <canvas id="pieChart" width="400" height="400"></canvas>
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="mt-8">
+          <button
+            className="px-4 py-2 text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
+            onClick={() => setShowGraph(!showGraph)}
+          >
+            {showGraph ? 'Hide Insights' : 'Show Insights'}
+          </button>
         </div>
       </main>
     </div>
