@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, FileText, Video, Menu, X, BarChart2, TrendingUp, AlertCircle, Lightbulb, Target, CheckCircle, Eye, Clock, ThumbsUp, ExternalLink, Share2, Smartphone } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
@@ -19,28 +19,57 @@ const staggerContainer = {
 };
 
 const fetchData = async (query) => {
-  const response = await fetch('http://localhost:3000/api/v1/yt/demo/ads', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ query }),
-  });
-  const data = await response.json();
-  return data;
+    const response = await fetch('http://localhost:3000/api/v1/yt/ads', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query }),
+    });
+    const data = await response.json();
+    return data;
 };
 
 const fetchReport = async (query, token) => {
-  const response = await fetch('http://localhost:3000/api/v1/report/demo', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ query }),
-  });
-  const data = await response.json();
-  return data;
+    const response = await fetch('http://localhost:3000/api/v1/report/', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query }),
+    });
+    const data = await response.json();
+    return data;
+};
+
+// Play Store API integration
+const playStoreApiKey = 'YOUR_API_KEY'; // Replace with your actual API key
+const playStoreUrl = 'http://localhost:3000/api/v1/playstore';
+
+// New function to fetch Play Store data
+const fetchPlayStoreData = async (query) => {
+    const response = await fetch(playStoreUrl, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${playStoreApiKey}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ query })
+    });
+    const data = await response.json();
+    return data;
+};
+
+// Update the handlePlayStoreSearch function to accept a query parameter
+const handlePlayStoreSearch = async (setPlayStoreResults, query) => {
+    try {
+        const playStoreData = await fetchPlayStoreData(query); // Use the passed query
+        setPlayStoreResults(playStoreData); // Set the fetched data to state
+        console.log(playStoreData); // Log the data to check the structure
+    } catch (error) {
+        console.error('Error fetching Play Store data:', error);
+    }
 };
 
 // Add responsive navigation component
@@ -73,6 +102,12 @@ const MobileNav = ({ activeTab, setActiveTab, isOpen, setIsOpen }) => (
                             onClick={() => { setActiveTab('report'); setIsOpen(false); }}
                             icon={<FileText size={18} />}
                             label="Report"
+                        />
+                        <TabButton
+                            active={activeTab === 'playstore'}
+                            onClick={() => { setActiveTab('playstore'); setIsOpen(false); }}
+                            icon={<Smartphone size={18} />}
+                            label="Play Store"
                         />
                     </nav>
                 </motion.div>
@@ -136,6 +171,13 @@ export default function Dashboard() {
     const [reportData, setReportData] = useState(null);
     const [isNavOpen, setIsNavOpen] = useState(false);
     const [videoType, setVideoType] = useState('long');
+    const [playStoreResults, setPlayStoreResults] = useState([]);
+    const [expandedProductIndex, setExpandedProductIndex] = useState(null);
+
+    // Call the function to fetch Play Store data when needed
+    useEffect(() => {
+        handlePlayStoreSearch(setPlayStoreResults, searchQuery);
+    }, [searchQuery]);
 
     const handleSearch = async (e) => {
         e.preventDefault();
@@ -164,6 +206,10 @@ export default function Dashboard() {
                 setVideoResults(longVideos);
                 setShortsResults(shorts);
                 setReportData(await fetchReport(searchQuery, 'YOUR_TOKEN_HERE'));
+                
+                // Call the Play Store search with the current searchQuery
+                await handlePlayStoreSearch(setPlayStoreResults, searchQuery); // Pass searchQuery here
+
             } catch (error) {
                 console.error('Error fetching data:', error);
             } finally {
@@ -444,6 +490,81 @@ export default function Dashboard() {
         );
     };
 
+    // New function to render Play Store content
+    const renderPlayStoreContent = () => {
+        return playStoreResults.length > 0 ? (
+            playStoreResults.map((item, index) => (
+                <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow duration-300 cursor-pointer mb-4"
+                >
+                    <h3 className="text-xl font-bold mb-3">{item.product.title}</h3>
+                    <a
+                        href={item.product.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors duration-200"
+                    >
+                        <ExternalLink className="w-4 h-4" />
+                        <span>View on Play Store</span>
+                    </a>
+                    <div className="mt-2">
+                        <img src={item.product.thumbnail} alt={item.product.title} className="w-16 h-16 rounded" />
+                        <p className="text-gray-600">Rating: {item.product.rating} | Downloads: {item.product.downloads}</p>
+                        <p className="text-gray-600">Author: {item.product.author}</p>
+                        <p className="text-gray-600">Category: {item.product.category}</p>
+                    </div>
+
+                    {/* Expand button */}
+                    <button
+                        className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200"
+                        onClick={() => setExpandedProductIndex(expandedProductIndex === index ? null : index)} // Toggle expand/collapse
+                    >
+                        {expandedProductIndex === index ? 'Collapse' : 'Expand'} Reviews
+                    </button>
+
+                    {/* Show reviews if the product is expanded */}
+                    {expandedProductIndex === index && (
+                        <div className="mt-4">
+                            <h4 className="font-semibold text-lg mb-2">Reviews:</h4>
+                            {item.reviews.length > 0 ? (
+                                item.reviews.map((review) => (
+                                    <div key={review.id} className="border-t border-gray-200 pt-2 mt-2 flex items-start">
+                                        <img src={review.avatar} alt={review.title} className="w-10 h-10 rounded-full mr-3" />
+                                        <div className="flex-1">
+                                            <div className="flex justify-between">
+                                                <p className="font-bold">{review.title}</p>
+                                                <p className="text-sm text-gray-500">{review.date}</p>
+                                            </div>
+                                            <p className="text-sm">Rating: {review.rating}</p>
+                                            <p className="text-gray-700 mt-1">{review.snippet}</p>
+                                            {review.response && (
+                                                <div className="mt-2 p-2 border-l-4 border-blue-500 bg-blue-50">
+                                                    <p className="font-semibold">Response from {review.response.title}:</p>
+                                                    <p className="text-gray-600">{review.response.snippet}</p>
+                                                    <p className="text-sm text-gray-500">{review.response.date}</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-gray-500">No reviews available.</p>
+                            )}
+                        </div>
+                    )}
+                </motion.div>
+            ))
+        ) : (
+            <div className="col-span-full text-center py-12 text-gray-500">
+                No Play Store results found.
+            </div>
+        );
+    };
+
     return (
         <div className="min-h-screen bg-gray-50 border-8 border-white">
             <header className="bg-gradient-to-r from-[#A941D2] to-[#2D0075] text-white shadow-xl sticky top-0 z-50">
@@ -458,7 +579,7 @@ export default function Dashboard() {
                         </h1>
                         <MobileNav
                             activeTab={activeTab}
-                            setActive Tab={setActiveTab}
+                            setActiveTab={setActiveTab}
                             isOpen={isNavOpen}
                             setIsOpen={setIsNavOpen}
                         />
@@ -522,6 +643,12 @@ export default function Dashboard() {
                             icon={<FileText size={18} />}
                             label="Report"
                         />
+                        <TabButton
+                            active={activeTab === 'playstore'}
+                            onClick={() => setActiveTab('playstore')}
+                            icon={<Smartphone size={18} />}
+                            label="Play Store"
+                        />
                     </nav>
                 </div>
 
@@ -545,6 +672,8 @@ export default function Dashboard() {
                         )}
 
                         {activeTab === 'report' && renderReportInsights()}
+
+                        {activeTab === 'playstore' && renderPlayStoreContent()}
                     </motion.div>
                 </AnimatePresence>
             </main>
