@@ -181,6 +181,8 @@ export default function Dashboard() {
             setLoading(true);
             try {
                 const searchData = await fetchData(searchQuery);
+
+                console.log(searchData);
                 
                 // Filter regular videos (non-shorts)
                 const longVideos = searchData.video_results.filter(video => 
@@ -205,6 +207,7 @@ export default function Dashboard() {
                 
                 // Move the Play Store search here, inside the form submission handler
                 await handlePlayStoreSearch(setPlayStoreResults, searchQuery);
+                setLoading(false);
 
             } catch (error) {
                 console.error('Error fetching data:', error);
@@ -234,6 +237,29 @@ export default function Dashboard() {
                     transition={{ delay: index * 0.1 }}
                     className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow duration-300"
                 >
+                    {/* Video Thumbnail */}
+                    {
+                        videoType != 'shorts' && (
+                            <div>
+                                <img 
+                                    src={item.thumbnail.static}
+                                    alt={item.title} 
+                                    className="w-full h-48 object-cover rounded-lg mb-4"
+                                />
+                            </div>
+                        )
+                    }
+                    {
+                        videoType === 'shorts' && (
+                                <div>
+                                    <img 
+                                        src={item.thumbnail}
+                                        alt={item.title} 
+                                        className="w-full h-48 object-cover rounded-lg mb-4"
+                                    />
+                                </div>
+                        )
+                    }
                     <h3 className="text-lg font-bold mb-3">{item.title}</h3>
                     {!videoType === 'shorts' && item.description && (
                         <p className="text-gray-600 mb-4 line-clamp-2">{item.description}</p>
