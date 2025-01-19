@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
 import { User, Mail, Lock, UserCircle } from "lucide-react";
+import { base_url } from "../constant";
 
 const SignUp = () => {
     const navigate = useNavigate();
@@ -28,7 +29,7 @@ const SignUp = () => {
 
         try {
             const response = await fetch(
-                "http://localhost:3000/api/v1/auth/register",
+                `${base_url}/api/v1/auth/register`,
                 {
                     method: "POST",
                     headers: {

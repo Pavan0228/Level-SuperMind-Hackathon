@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { Search, FileText, Video, Menu, X, BarChart2, TrendingUp, AlertCircle, Lightbulb, Target, CheckCircle, Eye, Clock, ThumbsUp, ExternalLink, Share2, Smartphone } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
+import { base_url } from './constant';
+import Cookies from 'js-cookie';
 
 const fadeIn = {
     initial: { opacity: 0, y: 20 },
@@ -19,10 +21,11 @@ const staggerContainer = {
 };
 
 const fetchData = async (query) => {
-    const response = await fetch('http://localhost:3000/api/v1/yt/ads', {
+    const response = await fetch(`${base_url}/api/v1/yt/ads`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${Cookies.get('accessToken')}`,
         },
         body: JSON.stringify({ query }),
     });
@@ -31,10 +34,10 @@ const fetchData = async (query) => {
 };
 
 const fetchReport = async (query, token) => {
-    const response = await fetch('http://localhost:3000/api/v1/report/', {
+    const response = await fetch(`${base_url}/api/v1/report/`, {
         method: 'POST',
         headers: {
-            'Authorization': `Bearer ${token}`,
+            'Authorization': `Bearer ${Cookies.get('accessToken')}`,
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({ query }),
@@ -44,15 +47,14 @@ const fetchReport = async (query, token) => {
 };
 
 // Play Store API integration
-const playStoreApiKey = 'YOUR_API_KEY'; // Replace with your actual API key
-const playStoreUrl = 'http://localhost:3000/api/v1/playstore';
+const playStoreUrl = `${base_url}/api/v1/playstore`;
 
 // New function to fetch Play Store data
 const fetchPlayStoreData = async (query) => {
     const response = await fetch(playStoreUrl, {
         method: 'POST',
         headers: {
-            'Authorization': `Bearer ${playStoreApiKey}`,
+            'Authorization': `Bearer ${Cookies.get('accessToken')}`,
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({ query })
@@ -66,7 +68,6 @@ const handlePlayStoreSearch = async (setPlayStoreResults, query) => {
     try {
         const playStoreData = await fetchPlayStoreData(query); // Use the passed query
         setPlayStoreResults(playStoreData); // Set the fetched data to state
-        console.log(playStoreData); // Log the data to check the structure
     } catch (error) {
         console.error('Error fetching Play Store data:', error);
     }
@@ -174,11 +175,6 @@ export default function Dashboard() {
     const [playStoreResults, setPlayStoreResults] = useState([]);
     const [expandedProductIndex, setExpandedProductIndex] = useState(null);
 
-    // Call the function to fetch Play Store data when needed
-    useEffect(() => {
-        handlePlayStoreSearch(setPlayStoreResults, searchQuery);
-    }, [searchQuery]);
-
     const handleSearch = async (e) => {
         e.preventDefault();
         if (searchQuery) {
@@ -207,8 +203,8 @@ export default function Dashboard() {
                 setShortsResults(shorts);
                 setReportData(await fetchReport(searchQuery, 'YOUR_TOKEN_HERE'));
                 
-                // Call the Play Store search with the current searchQuery
-                await handlePlayStoreSearch(setPlayStoreResults, searchQuery); // Pass searchQuery here
+                // Move the Play Store search here, inside the form submission handler
+                await handlePlayStoreSearch(setPlayStoreResults, searchQuery);
 
             } catch (error) {
                 console.error('Error fetching data:', error);

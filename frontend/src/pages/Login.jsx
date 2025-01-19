@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
 import { Lock, Mail } from "lucide-react";
+import { base_url } from "../constant";
 
 const Login = () => {
     const navigate = useNavigate();
@@ -19,7 +20,7 @@ const Login = () => {
         setError("");
 
         try {
-            const response = await fetch("http://localhost:3000/api/v1/auth/login", {
+            const response = await fetch(`${base_url}/api/v1/auth/login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(formData),
