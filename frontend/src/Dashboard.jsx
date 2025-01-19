@@ -514,7 +514,6 @@ export default function Dashboard() {
                     <div className="mt-2">
                         <img src={item.product.thumbnail} alt={item.product.title} className="w-16 h-16 rounded" />
                         <p className="text-gray-600">Rating: {item.product.rating} | Downloads: {item.product.downloads}</p>
-                        <p className="text-gray-600">Author: {item.product.author}</p>
                         <p className="text-gray-600">Category: {item.product.category}</p>
                     </div>
 
@@ -532,22 +531,16 @@ export default function Dashboard() {
                             <h4 className="font-semibold text-lg mb-2">Reviews:</h4>
                             {item.reviews.length > 0 ? (
                                 item.reviews.map((review) => (
-                                    <div key={review.id} className="border-t border-gray-200 pt-2 mt-2 flex items-start">
+                                    <div key={review.id} className="border-t border-gray-200 pt-2 mt-2 flex items-justify">
                                         <img src={review.avatar} alt={review.title} className="w-10 h-10 rounded-full mr-3" />
                                         <div className="flex-1">
                                             <div className="flex justify-between">
-                                                <p className="font-bold">{review.title}</p>
-                                                <p className="text-sm text-gray-500">{review.date}</p>
+                                                <p className="font-bold ">{review.title}</p>
+                                                <p className="text-sm text-grey-500">{review.date}</p>
                                             </div>
                                             <p className="text-sm">Rating: {review.rating}</p>
-                                            <p className="text-gray-700 mt-1">{review.snippet}</p>
-                                            {review.response && (
-                                                <div className="mt-2 p-2 border-l-4 border-blue-500 bg-blue-50">
-                                                    <p className="font-semibold">Response from {review.response.title}:</p>
-                                                    <p className="text-gray-600">{review.response.snippet}</p>
-                                                    <p className="text-sm text-gray-500">{review.response.date}</p>
-                                                </div>
-                                            )}
+                                            <p className="text-gray-700 text-justify mt-1">{review.snippet}</p>
+                                            
                                         </div>
                                     </div>
                                 ))
