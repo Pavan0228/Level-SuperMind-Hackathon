@@ -458,7 +458,7 @@ export default function Dashboard() {
                         </h1>
                         <MobileNav
                             activeTab={activeTab}
-                            setActiveTab={setActiveTab}
+                            setActive Tab={setActiveTab}
                             isOpen={isNavOpen}
                             setIsOpen={setIsNavOpen}
                         />
